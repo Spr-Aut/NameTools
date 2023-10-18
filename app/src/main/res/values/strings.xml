@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Tools</string>
+    <string name="title_activity_name_finder">NameFinderActivity</string>
+</resources>
