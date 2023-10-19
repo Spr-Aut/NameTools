@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -74,8 +73,8 @@ fun NameMatchTools() {
         Spacer(modifier = Modifier.height(10.dp))
 
         Button(onClick = {
-            val fullList = separateNames(fullNames.value.text)
-            val currentList = separateNames(currentNames.value.text)
+            val fullList = separateNames(fullNames.value.text.removeNumAndDot())
+            val currentList = separateNames(currentNames.value.text.removeNumAndDot())
             absentList.value = currentList.findWhichAreNotExistIn(fullList)
         }) {
             Text(text = "查找缺失的同学")
@@ -103,7 +102,20 @@ fun NameInputBox(
 
 fun separateNames(names: String): List<String> {
     val splitCharacter = "\\s|,|，|\n"
-    return names.split(splitCharacter.toRegex()).filter { it.isNotBlank() && it.isNotEmpty() }
+    val nameList =
+        names.split(splitCharacter.toRegex()).filter { it.isNotBlank() && it.isNotEmpty() }
+    return nameList.map { extractChineseCharacters(it) }
+}
+
+fun String.removeNumAndDot(): String {
+    val regex = Regex("[0-9.]+")
+    return this.replace(regex, "")
+}
+
+fun extractChineseCharacters(str: String): String {
+    val regex = Regex("[\\u4E00-\\u9FA5]+")
+    val matchResult = regex.find(str)
+    return matchResult?.value ?: str
 }
 
 fun List<String>.findWhichAreNotExistIn(fullList: List<String>): List<String> {
