@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.spraut.tools.ui.theme.ToolsTheme
 
 class NameFinderActivity : ComponentActivity() {
+    private val mSpName = "NameFinder"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -53,8 +54,13 @@ class NameFinderActivity : ComponentActivity() {
 @Composable
 fun NameMatchTools() {
     val context = LocalContext.current
-    val fullNames = remember { mutableStateOf(TextFieldValue()) }
+    val prefsName = "NameFinder"
+    val key = "wholeClassNames"
+    val wholeClassNamesFromSp = getStringFromSp(context, prefsName, key)
+
+    val fullNames = remember { mutableStateOf(TextFieldValue(wholeClassNamesFromSp)) }
     val currentNames = remember { mutableStateOf(TextFieldValue()) }
+
     val absentList = remember {
         mutableStateOf(listOf<String>())
     }
@@ -66,7 +72,7 @@ fun NameMatchTools() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-        NameInputBox(names = fullNames, label = "全班名单")
+        NameInputBox(names = fullNames, label = "全班名单", onTextChange = {it.saveStringToSp(context, prefsName, key)})
         Spacer(modifier = Modifier.height(10.dp))
 
         NameInputBox(names = currentNames, label = "本次名单")
@@ -89,11 +95,17 @@ fun NameMatchTools() {
 fun NameInputBox(
     names: MutableState<TextFieldValue>,
     label: String = "",
-    modifier: Modifier = Modifier.fillMaxWidth()
+    modifier: Modifier = Modifier.fillMaxWidth(),
+    onTextChange: ((String) -> Unit)? = null
 ) {
     TextField(
         value = names.value,
-        onValueChange = { names.value = it },
+        onValueChange = {
+            names.value = it
+            if (onTextChange != null) {
+                onTextChange(it.text)
+            }
+        },
         label = { Text(text = label) },
         modifier = modifier,
         maxLines = 8
@@ -120,6 +132,18 @@ fun extractChineseCharacters(str: String): String {
 
 fun List<String>.findWhichAreNotExistIn(fullList: List<String>): List<String> {
     return fullList.subtract(this.toSet()).toList()
+}
+
+fun String.saveStringToSp(context: Context, prefsName: String, key: String) {
+    val sharedPreferences = context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
+    val editor = sharedPreferences.edit()
+    editor.putString(key, this)
+    editor.apply()
+}
+
+fun getStringFromSp(context: Context, prefsName: String, key: String): String {
+    val sharedPreferences = context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
+    return sharedPreferences.getString(key, "")?: ""
 }
 
 fun String.showToast(context: Context) {
